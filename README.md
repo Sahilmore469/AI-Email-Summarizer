@@ -7,6 +7,7 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-FF4B4B?style=flat&logo=streamlit&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq-LLaMA%203.1-F55036?style=flat)
 ![Nylas](https://img.shields.io/badge/Nylas-Email%20API-5C5BD4?style=flat)
+![Render](https://img.shields.io/badge/Backend-Render-46E3B7?style=flat&logo=render&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat)
 
 ---
@@ -20,6 +21,15 @@ A full-stack AI-powered email summarizer that:
 - 🤖 Summarizes each email using **Groq's LLaMA 3.1 8B Instant** model
 - 📊 Displays **structured summaries** — overview, key points, action items & deadlines
 - 🎨 Beautiful **dark-themed Streamlit UI** with live backend status
+
+---
+
+## 🌐 Live Demo
+
+| Layer | Platform | URL |
+|-------|----------|-----|
+| 🖥️ Frontend | Streamlit Community Cloud | *(your streamlit app URL)* |
+| ⚙️ Backend | Render | *(your render app URL)* |
 
 ---
 
@@ -43,7 +53,7 @@ email-summarizer/
 
 **Data Flow:**
 ```
-User → Streamlit UI → GET /emails?limit=N → server.js
+User → Streamlit UI → GET /emails?limit=N → server.js (Render)
     → nylasClient.js → Nylas API → Gmail
     → groqClient.js  → Groq API  → LLaMA 3.1
     → JSON response  → Email cards displayed
@@ -51,7 +61,7 @@ User → Streamlit UI → GET /emails?limit=N → server.js
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Local)
 
 ### Prerequisites
 
@@ -119,6 +129,60 @@ streamlit run app.py
 ```
 
 Open **http://localhost:8501** in your browser.
+
+---
+
+## ☁️ Deployment
+
+The app is deployed with **Render** for the backend and **Streamlit Community Cloud** for the frontend.
+
+### Backend → [Render](https://render.com)
+
+1. Push your code to GitHub (`.env` is gitignored — your keys are safe)
+2. Go to [render.com](https://render.com) → **New** → **Web Service**
+3. Connect your GitHub repository
+4. Configure the service:
+
+   | Setting | Value |
+   |---------|-------|
+   | **Environment** | `Node` |
+   | **Build Command** | `npm install` |
+   | **Start Command** | `node server.js` |
+   | **Region** | Your preferred region |
+
+5. Go to **Environment** tab → add all your environment variables:
+
+   ```
+   NYLAS_API_KEY=your_nylas_api_key_here
+   NYLAS_API_URI=https://api.us.nylas.com
+   NYLAS_USER_GRANT_ID=your_nylas_grant_id_here
+   GROQ_API_KEY=your_groq_api_key_here
+   PORT=10000
+   ```
+
+   > ⚠️ **Set `PORT=10000`** on Render. Render internally routes traffic through port 10000; using `3000` will cause the health check to fail.
+
+6. Click **Create Web Service** — Render will build and deploy automatically
+7. Your backend URL will look like: `https://your-app-name.onrender.com`
+
+> 💡 **Free tier note:** Render's free plan spins down after 15 minutes of inactivity. The first request after idle may take ~30 seconds to respond. Upgrade to a paid plan or use Render's cron to keep it warm if needed.
+
+---
+
+### Frontend → [Streamlit Community Cloud](https://share.streamlit.io)
+
+1. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
+2. Connect your GitHub account and select your repository
+3. Set the **Main file path** to `app.py` and branch to `main`
+4. Click **Advanced settings** → add the following secret:
+
+   ```toml
+   BACKEND_URL = "https://your-app-name.onrender.com"
+   ```
+
+5. Click **Deploy** — your frontend will be live in under a minute
+
+> ✅ The `BACKEND_URL` secret tells the Streamlit app where to find your Render backend. Make sure it matches exactly (no trailing slash).
 
 ---
 
@@ -195,73 +259,54 @@ Any mentioned dates, or "None"
 | Nylas 404 (bad grant ID) | Returns grant ID guidance message |
 | Groq rate limit (429) | Auto-retries up to 2× with delay |
 | Token overflow | Email body pre-trimmed to 1000 chars |
-| Backend offline | Streamlit shows connection guide |
+| Backend offline / cold start | Streamlit shows connection guide |
 | Empty/invalid response | Streamlit shows diagnostic error card |
 | Port already in use | Server prints exact kill command |
 
 ---
 
-## ☁️ Deployment
+## 📁 Environment Variables Reference
 
-### Backend → [Railway](https://railway.app) (free)
-
-1. Push code to GitHub — `.env` is gitignored, your keys are safe
-2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub**
-3. Select your repo → **Deploy Now**
-4. Go to **Settings → Networking → Generate Domain**  
-   You'll get a URL like: `https://your-app.up.railway.app`
-5. Go to **Variables** tab → add all 4 keys from your `.env`
-
-### Frontend → [Streamlit Community Cloud](https://share.streamlit.io) (free)
-
-1. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
-2. Set Repository, Branch (`main`), and Main file (`app.py`)
-3. Click **Advanced settings** → add this secret:
-   ```toml
-   BACKEND_URL = "https://your-app.up.railway.app"
-   ```
-4. Click **Deploy**
+| Variable | Required | Where to Set | Description |
+|----------|----------|-------------|-------------|
+| `NYLAS_API_KEY` | ✅ | Render env vars | Nylas application API key |
+| `NYLAS_API_URI` | ✅ | Render env vars | Use `https://api.us.nylas.com` |
+| `NYLAS_USER_GRANT_ID` | ✅ | Render env vars | Grant ID of connected email account |
+| `GROQ_API_KEY` | ✅ | Render env vars | Groq API key for LLaMA access |
+| `PORT` | ✅ on Render | Render env vars | Set to `10000` on Render |
+| `BACKEND_URL` | ✅ on Cloud | Streamlit secrets | Your Render backend URL |
 
 ---
 
 ## 🔧 Troubleshooting
 
-**`EADDRINUSE: address already in use :::3000`**
+**Sidebar shows `Backend Error` on Streamlit Cloud**
+
+Your Render service may be cold-starting (free tier spins down after inactivity). Wait ~30 seconds and try again. Check that `BACKEND_URL` in Streamlit secrets exactly matches your Render URL.
+
+**Render deploy fails / health check fails**
+
+Make sure `PORT=10000` is set in your Render environment variables. Render requires this specific port on free and starter plans.
+
+**`EADDRINUSE: address already in use :::3000`** (local only)
 
 A previous server instance is still running. Kill it:
 
 ```bash
-# Windows (PowerShell)
-for /f "tokens=5" %a in ('netstat -ano ^| findstr :3000') do taskkill /PID %a /F
-
 # macOS / Linux
 lsof -ti:3000 | xargs kill -9
+
+# Windows (PowerShell)
+for /f "tokens=5" %a in ('netstat -ano ^| findstr :3000') do taskkill /PID %a /F
 ```
 
 **`Expecting value: line 1 column 1 (char 0)`**
 
-The backend returned an empty response — it crashed before responding. Check the terminal running `node server.js` for the stack trace. Most common cause: missing or empty `.env` file.
-
-**Sidebar shows `Backend Error`**
-
-Node.js server is not running. Open a new terminal and run `node server.js`.
+The backend returned an empty response. Check your Render service logs for errors. Most common cause: missing environment variables.
 
 **No emails returned**
 
 Your `NYLAS_USER_GRANT_ID` may be wrong. Check your Nylas Dashboard → Connected Accounts.
-
----
-
-## 📁 Environment Variables Reference
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `NYLAS_API_KEY` | ✅ | Nylas application API key |
-| `NYLAS_API_URI` | ✅ | Use `https://api.us.nylas.com` |
-| `NYLAS_USER_GRANT_ID` | ✅ | Grant ID of connected email account |
-| `GROQ_API_KEY` | ✅ | Groq API key for LLaMA access |
-| `PORT` | ❌ Optional | Backend port (default: `3000`) |
-| `BACKEND_URL` | ❌ Cloud only | Railway URL for Streamlit Cloud deployment |
 
 ---
 
@@ -271,6 +316,7 @@ Your `NYLAS_USER_GRANT_ID` may be wrong. Check your Nylas Dashboard → Connecte
 - Summarization runs **sequentially** to respect Groq rate limits
 - Groq rate limit errors trigger **automatic retry with backoff**
 - Model: `llama-3.1-8b-instant` — fast, free tier available
+- Render free tier has a **cold start delay** (~30s after inactivity)
 
 ---
 
@@ -279,7 +325,9 @@ Your `NYLAS_USER_GRANT_ID` may be wrong. Check your Nylas Dashboard → Connecte
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | Frontend | Python + Streamlit | Dark UI, controls, email cards |
+| Frontend Hosting | Streamlit Community Cloud | Free frontend deployment |
 | Backend | Node.js + Express | REST API, orchestration |
+| Backend Hosting | Render | Free backend deployment |
 | Email API | Nylas v7 SDK | Gmail / inbox access |
 | AI Model | Groq — LLaMA 3.1 8B Instant | Email summarization |
 | Config | dotenv | Environment variable management |
@@ -311,5 +359,5 @@ If you found this useful, give it a ⭐ on GitHub!
 ---
 
 <div align="center">
-  <sub>Built with Node.js · Streamlit · Nylas · Groq · LLaMA 3.1</sub>
+  <sub>Built with Node.js · Streamlit · Nylas · Groq · LLaMA 3.1 · Deployed on Render + Streamlit Cloud</sub>
 </div>
