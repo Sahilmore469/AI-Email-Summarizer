@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import os
 from datetime import datetime
 
 # ─────────────────────────────────────────────
@@ -198,7 +199,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-BACKEND_URL = "http://127.0.0.1:3000"
+# ─────────────────────────────────────────────
+# BACKEND URL — reads from Streamlit secrets or env
+# ─────────────────────────────────────────────
+BACKEND_URL = (
+    st.secrets.get("BACKEND_URL", None)
+    or os.environ.get("BACKEND_URL", "http://127.0.0.1:3000")
+)
 
 # ─────────────────────────────────────────────
 # SIDEBAR
@@ -228,7 +235,7 @@ with st.sidebar:
     st.markdown("### 🔌 Backend Status")
 
     try:
-        health = requests.get(f"{BACKEND_URL}/", timeout=3)
+        health = requests.get(f"{BACKEND_URL}/", timeout=5)
         if health.status_code == 200:
             st.success("✅ Backend Connected")
         else:
@@ -237,8 +244,8 @@ with st.sidebar:
         st.error("❌ Backend Offline")
         st.markdown("""
         <small style="color:#6b7280;">
-        Start the backend with:<br>
-        <code style="color:#a78bfa;">node server.js</code>
+        Backend may be sleeping (free Render tier).<br>
+        Wait 30s and refresh the page.
         </small>
         """, unsafe_allow_html=True)
 
@@ -278,12 +285,11 @@ if fetch_clicked:
             data = response.json()
 
         except requests.exceptions.ConnectionError:
-            st.markdown("""
+            st.markdown(f"""
             <div class="error-card">
-                <h3>🔌 Backend Not Running</h3>
-                <p>Could not connect to <code>http://127.0.0.1:3000</code>.</p>
-                <p>Please start the Node.js backend first:</p>
-                <pre style="background:#2d0a0a;padding:0.8rem;border-radius:8px;color:#fca5a5;">node server.js</pre>
+                <h3>🔌 Backend Not Reachable</h3>
+                <p>Could not connect to <code>{BACKEND_URL}</code>.</p>
+                <p>If using Render free tier, the backend may be sleeping — wait 30 seconds and try again.</p>
             </div>
             """, unsafe_allow_html=True)
             st.stop()
@@ -316,7 +322,7 @@ if fetch_clicked:
             <hr style="border-color:#7f1d1d;">
             <p style="font-size:0.85rem;color:#9ca3af;">
                 Common fixes:<br>
-                • Check your <code>.env</code> file has valid keys<br>
+                • Check your Render environment variables are set<br>
                 • Verify NYLAS_USER_GRANT_ID is correct<br>
                 • Ensure GROQ_API_KEY is active
             </p>
