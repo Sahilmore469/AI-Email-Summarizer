@@ -350,9 +350,9 @@ This project is licensed under the MIT License.
 
 ---
 
-## 👤 Author
+## 👤 Authors
 
-Built by **Sahil More**
+Built by **Sahil More** and **Ayush Shukla**
 
 If you found this useful, give it a ⭐ on GitHub!
 
