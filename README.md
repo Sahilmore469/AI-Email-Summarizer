@@ -28,7 +28,7 @@ A full-stack AI-powered email summarizer that:
 
 | Layer | Platform | URL |
 |-------|----------|-----|
-| 🖥️ Frontend | Streamlit Community Cloud | *(your streamlit app URL)* |
+| 🖥️ Frontend | Streamlit Community Cloud | *(https://share.streamlit.io)* |
 | ⚙️ Backend | Render | *(your render app URL)* |
 
 ---
